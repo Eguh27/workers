@@ -34,6 +34,11 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # Secret produksi disimpan sebagai environment secrets milik environment
+    # `secrets`. Tanpa deklarasi ini job tidak bisa melihatnya dan berhenti di
+    # "Environment DATABASE_URL belum diset". Environment-nya tanpa protection
+    # rule, jadi tidak menambah gerbang approval.
+    environment: secrets
     steps:
       - uses: actions/checkout@v4
 

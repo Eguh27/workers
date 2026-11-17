@@ -41,7 +41,9 @@ kredensial produksi, jadi tidak boleh pernah menjalankan kode dari PR.
 
 ## Secrets yang harus diisi
 
-Settings → Secrets and variables → Actions → **Repository secrets**:
+Settings → Environments → **secrets** → *Environment secrets* (job
+`publish` mendeklarasikan `environment: secrets`). Repository secrets juga
+terbaca, tapi nilai di environment yang dipakai sekarang:
 
 | Secret | Isi |
 |---|---|

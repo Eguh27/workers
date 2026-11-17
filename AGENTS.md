@@ -17,6 +17,9 @@ berguna untuk membandingkan perilaku, bukan untuk dijadikan spesifikasi baru.
   `repository_dispatch`, `workflow_dispatch`, dan `schedule`.
 - **Jangan menambahkan secret atau URL privat** ke kode, komentar, contoh, atau
   dokumentasi. Repo publik.
+- Secret produksi dibaca lewat `environment: secrets` (environment secrets).
+  Kalau nama environment berubah, job akan berhenti dengan
+  `Environment DATABASE_URL belum diset` — itu bukan bug worker.
 - **Jangan menaikkan plafon publish Instagram** di `src/quota.ts`. Angka 50
   adalah plafon efektif yang benar-benar ditegakkan Meta, bukan selera.
 - **Jangan mengubah `540×675` / `1080×1350`, safe-zone `540×540`, atau nama

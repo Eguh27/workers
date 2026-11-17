@@ -14,10 +14,10 @@ Urut dari yang memblokir publish sampai perawatan.
         collaborators** (paling ketat; jaring pengaman walau workflow ini tidak
         punya trigger PR).
       - Workflow permissions → **Read repository contents**.
-- [ ] Settings → Secrets and variables → Actions: isi enam repository secret
+- [x] Enam secret terpasang di environment `secrets`
       (`DATABASE_URL`, `IG_USER_ID`, `IG_ACCESS_TOKEN`,
-      `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`).
-      Nilainya **sama** dengan yang sekarang ada di secrets repo situs.
+      `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`),
+      dan workflow mendeklarasikan `environment: secrets`.
 - [ ] Setelah secrets terisi dan dispatch diuji: hapus secrets worker yang lama
       di repo situs (jangan sebelum Tahap 6 selesai — publish akan mati).
 
