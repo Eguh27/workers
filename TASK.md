@@ -37,7 +37,7 @@ produksi tidak lagi berada di repo yang sama dengan situs.
 Dikerjakan hanya setelah pemilik setuju, sebagai commit terpisah di repo situs.
 
 1. `src/pages/api/fess.ts` — arahkan `repository_dispatch` ke repo worker.
-   - `GH_REPO` diisi `owner/umpomenfess-worker` (env var, bukan literal).
+   - `GH_REPO` diisi `Eguh27/workers` (env var, bukan literal).
    - `event_type` menjadi `render-menfess` (harus sama dengan
      `repository_dispatch.types` di workflow worker).
    - Token diganti fine-grained PAT: akses hanya ke repo worker,

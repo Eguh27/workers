@@ -4,8 +4,8 @@ Urut dari yang memblokir publish sampai perawatan.
 
 ## 1. Repo publik (pemilik, sekali jalan)
 
-- [ ] Buat repo GitHub **public** `umpomenfess-worker` (tanpa README bawaan).
-- [ ] `git remote add origin <url>` lalu `git push -u origin main`.
+- [x] Repo GitHub **public** `Eguh27/workers` sudah dibuat; `origin` terpasang.
+- [x] `git remote add origin` + `git push -u origin main`.
 - [ ] Settings → Features: **matikan** Issues, Discussions, Projects, Wiki.
       Repo ini tidak menerima kontribusi lewat GitHub; permukaan serangan
       dipersempit.
@@ -23,10 +23,10 @@ Urut dari yang memblokir publish sampai perawatan.
 
 ## 2. Token untuk memicu worker
 
-- [ ] Buat **fine-grained PAT**: hanya repo `umpomenfess-worker`,
+- [ ] Buat **fine-grained PAT**: hanya repo `workers`,
       izin **Contents: read and write** (syarat `repository_dispatch`),
       tidak ada izin lain, masa berlaku pendek.
-- [ ] Simpan sebagai `GH_PAT` di Vercel, dan `GH_REPO` = `owner/umpomenfess-worker`.
+- [ ] Simpan sebagai `GH_PAT` di Vercel, dan `GH_REPO` = `Eguh27/workers`.
 - [ ] Redeploy Vercel **tanpa** "Use existing Build Cache": kedua nilai
       di-inline saat build oleh `import.meta.env`.
 - [ ] Cabut PAT lama yang masih hidup setelah dispatch baru terbukti jalan.
