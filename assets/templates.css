@@ -1,0 +1,172 @@
+/* =========================================================
+   TEMPLATE VISUAL MENFESS v2 — selaras landing "umpomenfess".
+   DNA: langit mint + matahari + gunung teal + koral, teks di
+   panel kaca (glassmorphism). Semua konten penting (teks & kode)
+   berada di dalam persegi tengah 540×540 → aman dari crop grid
+   IG 3×3 (postingan 4:5 dipotong persegi di tengah gambar).
+
+   Semua rule di-scope di bawah .mfsp supaya tidak bentrok dengan
+   global.css. Container tetap 540×675 (rasio 4:5); worker merender
+   node .mfsp via headless Chrome scale 2 → 1080×1350.
+
+   Catatan render (era html2canvas diakomodasi, tetap dipatuhi):
+   - efek blur kaca memakai rgba (backdrop-filter kini dirender Chrome,
+     tapi tetap dibuat fallback-friendly)
+   - svg fill/stroke memakai rgb() — bukan hex
+   - background-clip: text         → tidak dipakai
+========================================================= */
+
+.mfsp {
+  width: 540px;
+  height: 675px;
+}
+
+.mfsp .frame {
+  width: 540px;
+  height: 675px;
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ---------- komponen bersama ---------- */
+.mfsp .glass {
+  position: absolute;
+  background: rgba(255,255,255,0.52);
+  border: 1.5px solid rgba(255,255,255,0.88);
+  border-radius: 28px;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  display: flex; flex-direction: column;
+  padding: 24px 24px 20px;
+  box-shadow: 0 22px 46px rgba(23,68,61,0.16);
+}
+.mfsp .code-label {
+  font: 700 10.5px Quicksand, sans-serif; letter-spacing: 0.14em;
+  color: rgba(31,77,70,0.62);
+}
+.mfsp .foot-rule {
+  border-top: 1.5px dashed rgba(31,77,70,0.24);
+  padding-top: 13px; display: flex;
+  justify-content: space-between; align-items: center; gap: 10px;
+}
+.mfsp .quote-wrap {
+  flex: 1; display: flex; align-items: center; justify-content: center;
+  overflow: hidden; padding: 12px 2px; width: 100%;
+}
+
+/* ---------- 1. LANGIT (default) ---------- */
+.mfsp .tpl-langit {
+  background: linear-gradient(180deg, var(--sky1, #BCE7DF), var(--sky2, #8FCFC7));
+  color: var(--ink, #1F4D46);
+}
+.mfsp .langit-sun {
+  position: absolute; top: 6%; left: 8%; width: 96px; height: 96px; border-radius: 50%;
+  background: radial-gradient(circle at 42% 38%, #FBE49E, #F6C96B 72%);
+}
+.mfsp .cloud {
+  position: absolute; height: 26px; border-radius: 999px; background: rgba(255,255,255,0.92);
+  /* netralkan bocoran .cloud hero di global.css (animasi menggeser awan saat capture) */
+  animation: none; opacity: 1;
+}
+.mfsp .cloud::before { content: ""; position: absolute; left: 13%; bottom: 52%; width: 48%; height: 210%; background: inherit; border-radius: 50%; }
+.mfsp .cloud::after  { content: ""; position: absolute; right: 15%; bottom: 42%; width: 34%; height: 150%; background: inherit; border-radius: 50%; }
+.mfsp .c1 { top: 11%; right: 9%; width: 112px; }
+.mfsp .c2 { top: 25%; left: 5%; width: 78px; opacity: 0.85; }
+.mfsp .mts { position: absolute; bottom: 0; left: 0; width: 100%; height: 190px; display: block; }
+/* fill gunung memakai atribut SVG konkret (lihat mountainsSvg di render.ts)
+   — html2canvas tidak membawa stylesheet eksternal saat menserialisasi svg */
+.mfsp .g-langit { left: 8%; right: 8%; top: 15%; bottom: 21%; }
+.mfsp .g-tag {
+  align-self: flex-start; display: flex; align-items: center; gap: 7px;
+  font: 700 9.5px Quicksand, sans-serif; letter-spacing: 0.18em; text-transform: uppercase;
+  color: inherit; background: rgba(255,255,255,0.72);
+  border: 1px solid rgba(255,255,255,0.95); border-radius: 999px; padding: 7px 13px;
+}
+.mfsp .g-tag i { width: 7px; height: 7px; border-radius: 50%; background: #E8604C; }
+.mfsp .g-quote {
+  text-align: left; width: 100%; font: 700 21px/1.5 Quicksand, sans-serif; color: inherit;
+  white-space: pre-wrap; overflow-wrap: break-word;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 11; overflow: hidden;
+}
+.mfsp .g-quote.s1 { font-size: 17.5px; -webkit-line-clamp: 13; }
+.mfsp .g-quote.s2 { font-size: 14.5px; line-height: 1.55; -webkit-line-clamp: 16; }
+.mfsp .g-brand { display: flex; align-items: center; gap: 8px; font: 700 14px "Baloo 2", cursive; color: inherit; }
+.mfsp .g-logo { width: 17px; height: 17px; border-radius: 6px; background: #E8604C; position: relative; flex: none; }
+.mfsp .g-logo::after { content: ""; position: absolute; inset: 4px; border-radius: 3px 3px 4px 3px; background: #FFF6EA; }
+
+/* ---------- 2. KACA (studio terang) ---------- */
+.mfsp .tpl-kaca { background: var(--kbg, #FBF3E4); }
+.mfsp .blob { position: absolute; border-radius: 50%; }
+.mfsp .b1 { top: -9%; right: -11%; width: 320px; height: 320px; background: radial-gradient(circle, var(--b1, rgba(232,96,76,0.34)), transparent 70%); }
+.mfsp .b2 { bottom: -8%; left: -9%; width: 360px; height: 360px; background: radial-gradient(circle, var(--b2, rgba(76,158,143,0.38)), transparent 70%); }
+.mfsp .b3 { top: 34%; left: -13%; width: 230px; height: 230px; background: radial-gradient(circle, var(--b3, rgba(246,201,107,0.5)), transparent 70%); }
+.mfsp .kaca-glass {
+  position: absolute; inset: 8.5%;
+  background: rgba(255,255,255,0.62);
+  border: 1.5px solid rgba(255,255,255,0.95);
+  border-radius: 32px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  display: flex; flex-direction: column; padding: 24px 28px 20px;
+  box-shadow: 0 24px 52px rgba(31,77,70,0.12);
+}
+.mfsp .k-head { display: flex; align-items: center; gap: 11px; }
+.mfsp .k-logo {
+  width: 36px; height: 36px; border-radius: 12px; background: #E8604C; flex: none;
+  display: flex; align-items: center; justify-content: center;
+}
+.mfsp .k-brand b { display: block; font: 700 16px/1.15 "Baloo 2", cursive; color: #1F4D46; }
+.mfsp .k-brand span { font: 600 8.5px Quicksand, sans-serif; letter-spacing: 0.16em; text-transform: uppercase; color: #7C958D; }
+.mfsp .k-pill {
+  margin-left: auto; font: 700 9px Quicksand, sans-serif; letter-spacing: 0.16em; text-transform: uppercase;
+  color: #FFF6EA; background: #4C9E8F; border-radius: 999px; padding: 6px 12px;
+}
+.mfsp .k-quote {
+  text-align: left; width: 100%; font: 700 21px/1.55 Quicksand, sans-serif; color: #1F4D46;
+  white-space: pre-wrap; overflow-wrap: break-word;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 10; overflow: hidden;
+}
+.mfsp .k-quote.s1 { font-size: 17.5px; -webkit-line-clamp: 12; }
+.mfsp .k-quote.s2 { font-size: 14.5px; line-height: 1.55; -webkit-line-clamp: 15; }
+.mfsp .k-foot { font: 700 9.5px Quicksand, sans-serif; letter-spacing: 0.12em; text-transform: uppercase; color: #7C958D; }
+
+/* ---------- 3. STIKER ---------- */
+.mfsp .tpl-stiker { background: linear-gradient(180deg, var(--st1, #DFF2EC), var(--st2, #BFE5DA)); }
+.mfsp .st-glass {
+  position: absolute; left: 10%; right: 10%; top: 14%; bottom: 20%;
+  background: rgba(255,255,255,0.55);
+  border: 1.5px solid rgba(255,255,255,0.9);
+  border-radius: 26px;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  transform: rotate(-1.6deg);
+  display: flex; flex-direction: column; padding: 24px 24px 18px;
+  box-shadow: 0 20px 44px rgba(23,68,61,0.15);
+}
+.mfsp .st-tag {
+  align-self: center; font: 700 10px Quicksand, sans-serif; letter-spacing: 0.2em; text-transform: uppercase;
+  color: #3D8A7C; background: #FFFFFF; border-radius: 999px; padding: 7px 15px;
+  box-shadow: 0 4px 10px rgba(31,77,70,0.1);
+}
+.mfsp .st-quote {
+  text-align: left; width: 100%; font: 700 20px/1.5 Quicksand, sans-serif; color: #1F4D46;
+  white-space: pre-wrap; overflow-wrap: break-word;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 11; overflow: hidden;
+}
+.mfsp .st-quote.s1 { font-size: 16.5px; -webkit-line-clamp: 14; }
+.mfsp .st-quote.s2 { font-size: 14px; line-height: 1.55; -webkit-line-clamp: 17; }
+.mfsp .sticker { position: absolute; z-index: 6; }
+.mfsp .sticker svg { width: 100%; height: 100%; display: block; }
+.mfsp .stk-photo { left: 6%; bottom: 7%; width: 74px; height: 66px; transform: rotate(-8deg); }
+.mfsp .stk-chat  { right: 6%; top: 6%; width: 62px; height: 58px; transform: rotate(7deg); }
+.mfsp .stk-env   { right: 7%; bottom: 7.5%; width: 62px; height: 50px; transform: rotate(-6deg); }
+
+/* ---------- printilan ---------- */
+.mfsp .pd { position: absolute; z-index: 7; pointer-events: none; }
+.mfsp .pd svg { width: 100%; height: 100%; display: block; }
+.mfsp .pd-love {
+  width: 48px; height: 48px; border-radius: 50%; background: #E8604C;
+  border: 3px solid #FFF6EA; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 14px rgba(31,77,70,0.18);
+}
+.mfsp .pd-cloud { height: 22px; border-radius: 999px; background: rgba(255,255,255,0.95); }
+.mfsp .pd-cloud::before { content: ""; position: absolute; left: 13%; bottom: 52%; width: 48%; height: 210%; background: inherit; border-radius: 50%; }
+.mfsp .pd-cloud::after  { content: ""; position: absolute; right: 15%; bottom: 42%; width: 34%; height: 150%; background: inherit; border-radius: 50%; }
