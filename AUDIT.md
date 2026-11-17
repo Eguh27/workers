@@ -1,7 +1,7 @@
 # AUDIT — ekstraksi worker umpomenfess
 
-Hasil audit Tahap 1 sebelum ada perubahan apa pun. Sumber: repo
-`Eguh27/umpomenfess` (private), commit `60e9f35`.
+Hasil audit Tahap 1 sebelum ada perubahan apa pun. Sumber: repo situs
+`umpomenfess` (private), commit `60e9f35`.
 
 ## 1. File milik worker
 
