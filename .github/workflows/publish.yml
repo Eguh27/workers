@@ -1,0 +1,65 @@
+name: Render & Publish Menfess
+
+# Worker: claim job queued → render gambar (headless Chrome, markup & CSS
+# menyalin preview situs) → upload Cloudinary → publish ke Instagram.
+#
+# Repo ini hanya punya satu pekerjaan yang sah: memproses antrean di database.
+# Tidak ada trigger pull_request / pull_request_target, dan tidak ada kode dari
+# luar yang dijalankan dengan secrets.
+#
+# concurrency: satu worker saja pada satu waktu. Di dalam kode tetap ada
+# FOR UPDATE SKIP LOCKED sebagai pengaman kedua.
+#
+# timeout-minutes: 10 harus sama dengan WORKFLOW_TIMEOUT_MS di
+# src/run-budget.ts — ambang sapuan row `processing` dihitung dari angka itu.
+
+on:
+  # publish instan: dipicu API /api/fess setiap ada submit baru
+  repository_dispatch:
+    types: [render-menfess]
+  schedule:
+    # Jaring pengaman untuk retry dan job yang dispatch-nya gagal. Publish
+    # normal tetap dipicu repository_dispatch di atas.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-menfess
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Font emoji untuk render headless Chrome (teks fess bisa memuat emoji).
+      # Chrome sendiri sudah terpasang di runner ubuntu-latest.
+      - name: Install emoji font
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends fonts-noto-color-emoji
+
+      # render-entry.ts + assets/templates.css → src/render-bundle.js
+      - name: Build render bundle
+        run: npm run render:bundle
+
+      - name: Publish queued menfess
+        run: npx tsx src/publish.ts
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
