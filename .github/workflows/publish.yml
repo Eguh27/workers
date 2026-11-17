@@ -1,25 +1,17 @@
-name: Render & Publish Menfess
+name: Publish Menfess
 
-# Worker: claim job queued → render gambar (headless Chrome, markup & CSS
-# menyalin preview situs) → upload Cloudinary → publish ke Instagram.
+# Cron Publish: claim job rendered → publish ke Instagram Graph API.
+# TIDAK memerlukan Chrome/render — hanya IG API + DB + Cloudinary URL
+# yang sudah siap dari Cron Render.
 #
-# Repo ini hanya punya satu pekerjaan yang sah: memproses antrean di database.
-# Tidak ada trigger pull_request / pull_request_target, dan tidak ada kode dari
-# luar yang dijalankan dengan secrets.
+# Dua workflow terpisah dengan concurrency group berbeda supaya publish
+# tidak terblokir render Chrome.
 #
-# concurrency: satu worker saja pada satu waktu. Di dalam kode tetap ada
-# FOR UPDATE SKIP LOCKED sebagai pengaman kedua.
-#
-# timeout-minutes: 10 harus sama dengan WORKFLOW_TIMEOUT_MS di
-# src/run-budget.ts — ambang sapuan row `processing` dihitung dari angka itu.
+# permissions minimal: contents:read (checkout) + environment secrets.
 
 on:
-  # publish instan: dipicu API /api/fess setiap ada submit baru
-  repository_dispatch:
-    types: [render-menfess]
   schedule:
-    # Jaring pengaman untuk retry dan job yang dispatch-nya gagal. Publish
-    # normal tetap dipicu repository_dispatch di atas.
+    # Publish terjadwal: fallback + pacing 15 menit.
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
@@ -27,7 +19,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: render-menfess
+  group: publish-menfess
   cancel-in-progress: false
 
 jobs:
@@ -36,8 +28,7 @@ jobs:
     timeout-minutes: 10
     # Secret produksi disimpan sebagai environment secrets milik environment
     # `secrets`. Tanpa deklarasi ini job tidak bisa melihatnya dan berhenti di
-    # "Environment DATABASE_URL belum diset". Environment-nya tanpa protection
-    # rule, jadi tidak menambah gerbang approval.
+    # "Environment DATABASE_URL belum diset".
     environment: secrets
     steps:
       - uses: actions/checkout@v4
@@ -50,21 +41,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Font emoji untuk render headless Chrome (teks fess bisa memuat emoji).
-      # Chrome sendiri sudah terpasang di runner ubuntu-latest.
-      - name: Install emoji font
-        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends fonts-noto-color-emoji
+      # Tidak ada render-bundle, tidak ada Chrome, tidak ada font emoji.
+      # src/publish.ts hanya butuh DB + IG token (Cloudinary URL sudah di DB).
 
-      # render-entry.ts + assets/templates.css → src/render-bundle.js
-      - name: Build render bundle
-        run: npm run render:bundle
-
-      - name: Publish queued menfess
+      - name: Publish rendered menfess
         run: npx tsx src/publish.ts
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
-          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
-          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
-          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}

@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "render:bundle": "node src/build-render-bundle.mjs",
     "worker": "node src/build-render-bundle.mjs && tsx src/publish.ts",
+    "render:worker": "node src/build-render-bundle.mjs && tsx src/render-worker.ts",
     "render:queue": "node src/build-render-bundle.mjs && tsx src/render-queue.ts",
     "smoke": "node src/build-render-bundle.mjs && tsx src/smoke-render.ts"
   },
