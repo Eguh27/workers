@@ -1,0 +1,30 @@
+{
+  "name": "umpomenfess-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker render & publish menfess umpomenfess: klaim antrean, render headless Chrome, upload Cloudinary, publish ke Instagram.",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "tsx --test src/env.test.ts src/quota.test.ts src/run-budget.test.ts src/stale-claim.test.ts src/transient-error.test.ts src/render-queue.test.ts",
+    "typecheck": "tsc --noEmit",
+    "render:bundle": "node src/build-render-bundle.mjs",
+    "worker": "node src/build-render-bundle.mjs && tsx src/publish.ts",
+    "render:queue": "node src/build-render-bundle.mjs && tsx src/render-queue.ts",
+    "smoke": "node src/build-render-bundle.mjs && tsx src/smoke-render.ts"
+  },
+  "dependencies": {
+    "cloudinary": "^2.8.0",
+    "pg": "^8.16.3",
+    "puppeteer-core": "^24.22.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.7.2",
+    "@types/pg": "^8.15.6",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  }
+}

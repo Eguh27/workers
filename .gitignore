@@ -1,0 +1,18 @@
+# dependensi & artefak build
+node_modules/
+dist/
+src/render-bundle.js
+
+# env & secrets — jangan pernah commit
+.env
+.env.*
+!.env.example
+
+# hasil render untuk posting manual — berisi isi menfess, jangan di-commit
+postingan/
+
+# log & OS
+npm-debug.log*
+*.log
+.DS_Store
+Thumbs.db
