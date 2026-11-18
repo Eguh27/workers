@@ -32,9 +32,13 @@ antar post; angka dan alasannya ada di `src/run-budget.ts`.
 
 | Pemicu | Kapan |
 |---|---|
-| `repository_dispatch` tipe `render-menfess` | dikirim `POST /api/fess` di repo situs setiap ada kiriman baru |
+| `repository_dispatch` tipe `render-now` | dikirim `POST /api/fess` di repo situs setiap ada kiriman baru — memicu render **dan** publish |
 | `workflow_dispatch` | manual dari tab Actions |
-| `schedule` `*/15 * * * *` | jaring pengaman: retry, dispatch yang gagal, dan job yang tersisa |
+| `schedule` `*/15 * * * *` | jaring pengaman *best-effort*: scheduler GitHub nyatanya cuma menjalankan ~1% jadwal, jangan diandalkan |
+
+`publish.yml` sengaja ikut mendengarkan `render-now` (bukan hanya `schedule`)
+supaya publish tidak kelaparan saat cron tidak menyala. Publish hanya menyentuh
+row berstatus `rendered`, jadi tidak bertabrakan dengan render.
 
 Tidak ada trigger `pull_request` / `pull_request_target`: workflow ini memegang
 kredensial produksi, jadi tidak boleh pernah menjalankan kode dari PR.
@@ -98,8 +102,10 @@ mengonfirmasi sudah diposting manual, sehingga tidak ada posting dobel.
 ## Struktur
 
 ```text
-.github/workflows/publish.yml   workflow tunggal: dispatch/cron/manual
-src/publish.ts                  orkestrasi satu run
+.github/workflows/render.yml    Cron Render: repository_dispatch `render-now` + cron */5
+.github/workflows/publish.yml   Cron Publish: repository_dispatch `render-now` + cron */15
+src/render-worker.ts            entrypoint Cron Render
+src/publish.ts                  orkestrasi satu run publish
 src/queue.ts                    SQL antrean: claim, requeue, sapuan row nyangkut
 src/instagram.ts                klien Graph API + polling container
 src/render.ts                   Chrome headless + upload Cloudinary
