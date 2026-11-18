@@ -61,3 +61,9 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
           IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+          # Tanpa tiga baris ini `notify.ts` tidak akan pernah mengirim link
+          # Waiting Room, walau secret-nya sudah diisi di environment `secrets`.
+          # Kosong = no-op (aman).
+          WAITROOM_SECRET: ${{ secrets.WAITROOM_SECRET }}
+          WAITROOM_BASE_URL: ${{ secrets.WAITROOM_BASE_URL }}
+          WAITROOM_WEBHOOK_URL: ${{ secrets.WAITROOM_WEBHOOK_URL }}
