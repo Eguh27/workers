@@ -1,17 +1,28 @@
 name: Publish Menfess
 
-# Cron Publish: claim job rendered → publish ke Instagram Graph API.
+# Publish: claim job rendered → publish ke Instagram Graph API.
 # TIDAK memerlukan Chrome/render — hanya IG API + DB + Cloudinary URL
 # yang sudah siap dari Cron Render.
 #
 # Dua workflow terpisah dengan concurrency group berbeda supaya publish
 # tidak terblokir render Chrome.
 #
+# Pemicu utama adalah `repository_dispatch` yang ditembak /api/fess tiap ada
+# submit baru — event yang sama (`render-now`) juga didengar render.yml.
+# Alasan: scheduler GitHub (`schedule`) nyatanya cuma menjalankan ~1% jadwal
+# di akun ini, jadi publish tidak boleh bergantung padanya. Render dan publish
+# sama-sama reaktif terhadap satu event; publish hanya menyentuh row yang
+# sudah berstatus `rendered`, jadi tidak ada tabrakan dengan render.
+#
 # permissions minimal: contents:read (checkout) + environment secrets.
 
 on:
+  # Pemicu andal: tiap submit baru dari situs.
+  repository_dispatch:
+    types: [render-now]
   schedule:
-    # Publish terjadwal: fallback + pacing 15 menit.
+    # Cadangan best-effort: berguna saat tidak ada submit sama sekali
+    # (mis. dini hari), tapi jangan diandalkan.
     - cron: "*/15 * * * *"
   workflow_dispatch:
 
