@@ -181,5 +181,12 @@ Verifikasi tanpa Instagram:
 npm run render:slides -- --text "teks panjang..." --from teman
 ```
 
+Invarian yang pernah dilanggar (25 Nov): `createCarouselContainer` **hanya
+membuat** container dan mengembalikan id parent; `media_publish` dipanggil
+pemanggil tepat sekali. Dulu fungsi itu ikut mem-publish, sehingga `publish.ts`
+mem-publish id media sebagai creation id → Instagram membalas
+`Media Builder Not Found` padahal postnya sudah tayang, lalu job diulang dan
+post dobel. `src/carousel.test.ts` menjaga kontrak ini.
+
 Skrip ini hanya render + upload Cloudinary dan mencetak
 `{slide_count, image_urls}`; tidak ada panggilan Graph API.
