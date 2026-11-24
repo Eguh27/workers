@@ -5,7 +5,7 @@
 ========================================================= */
 import { log } from './log';
 import { parsePublishingLimit } from './quota';
-import { publishCarousel } from './carousel';
+import { createCarouselContainer } from './carousel';
 
 /** Instagram Login, bukan Facebook Login: graph.facebook.com tidak dipakai. */
 const GRAPH_BASE = 'https://graph.instagram.com/v21.0';
@@ -23,7 +23,8 @@ export interface InstagramClient {
   /** Container baru tiap attempt — container IG hanya valid 24 jam. */
   createContainer(imageUrl: string, caption: string): Promise<string>;
   /** Carousel: satu child per gambar lalu satu parent `media_type=CAROUSEL`.
-   *  Instagram yang menyusun slide-nya; satu fess tetap satu post. */
+   *  Instagram yang menyusun slide-nya; satu fess tetap satu post.
+   *  Mengembalikan id parent untuk di-publish pemanggil (JANGAN publish di sini). */
   createCarouselContainer(imageUrls: string[], caption: string): Promise<string>;
   publishContainer(creationId: string): Promise<string>;
   /** Sisa post yang boleh terbit sekarang; null = tidak terbaca (fail-open). */
@@ -117,9 +118,8 @@ export function createInstagramClient(token: string, userId: string): InstagramC
       return res.id as string;
     },
     createCarouselContainer: (imageUrls, caption) =>
-      publishCarousel(imageUrls, caption, {
+      createCarouselContainer(imageUrls, caption, {
         post: (path, params) => post(`${userId}/${path}`, params),
-        publish: publishContainer,
       }),
     publishContainer,
     remainingPosts,

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { publishCarousel, type CarouselDeps } from './carousel';
+import { createCarouselContainer, publishCarousel, type CarouselDeps } from './carousel';
 
 /** mock Graph API: mencatat urutan panggilan, mengembalikan id berurutan */
 function mockDeps(fail?: { at: 'child' | 'parent' | 'publish' }) {
@@ -66,4 +66,22 @@ test('satu url tetap dibuatkan carousel (pemanggil yang memilih alur single)', (
     assert.equal(calls.filter((c) => c.params.is_carousel_item === 'true').length, 1);
     assert.equal(calls.filter((c) => c.params.media_type === 'CAROUSEL').length, 1);
   });
+});
+
+test('kontrak pemisahan: createCarouselContainer hanya MEMBUAT parent, tidak publish', async () => {
+  const { deps, calls } = mockDeps();
+  const parentId = await createCarouselContainer(['u1', 'u2'], 'caption', { post: deps.post });
+  assert.equal(parentId, 'id3', 'id parent = container ketiga');
+  assert.equal(calls.filter((c) => c.path === 'media_publish').length, 0,
+    'pembuatan container tidak boleh mem-publish sendiri');
+});
+
+test('regresi dobel publish: publish.ts memanggil publish TEPAT sekali untuk carousel', async () => {
+  const { deps, calls } = mockDeps();
+  // alur publish.ts: buat parent dulu, baru publish id-nya sekali
+  const parentId = await createCarouselContainer(['u1', 'u2'], 'caption', { post: deps.post });
+  const mediaId = await deps.publish(parentId);
+  assert.equal(mediaId, 'media-42');
+  assert.equal(calls.filter((c) => c.path === 'media_publish').length, 1,
+    'dua kali publish = post dobel di Instagram lalu dicatat gagal');
 });

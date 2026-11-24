@@ -166,10 +166,13 @@ async function runPublishQueue(db: Client, ig: InstagramClient): Promise<number>
         break;
       }
 
-      // Publish ke Instagram: >1 slide = carousel (child → parent), satu slide = alur lama
-      const mediaId = imageUrls.length > 1
-        ? await ig.createCarouselContainer(imageUrls, captionFor(job.content)).then(ig.publishContainer)
-        : await ig.publishContainer(await ig.createContainer(imageUrls[0], captionFor(job.content)));
+      // Publish ke Instagram: >1 slide = carousel (child → parent), satu slide = alur lama.
+      // `media_publish` dipanggil TEPAT sekali: creation id parent dari carousel,
+      // atau container tunggal. Publish dua kali = post dobel di Instagram.
+      const creationId = imageUrls.length > 1
+        ? await ig.createCarouselContainer(imageUrls, captionFor(job.content))
+        : await ig.createContainer(imageUrls[0], captionFor(job.content));
+      const mediaId = await ig.publishContainer(creationId);
       log('media_publish ✓', mediaId);
 
       const permalink = await ig.permalink(mediaId);
