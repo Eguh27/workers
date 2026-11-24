@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildSlideStates, slideCountOf } from './slide-plan';
+import { buildSlideStates, slideCountOf, slideUrlsOf } from './slide-plan';
 import { MAX_DECORS } from './templates';
 
 const base = {
@@ -58,4 +58,25 @@ test('decors dibatasi MAX_DECORS dan ikut terpasang', () => {
   const decors = Array.from({ length: MAX_DECORS + 3 }, (_, i) => `d${i}`);
   const row = { ...base, custom_config: { decors } };
   assert.equal(buildSlideStates(row)[0].decors.length, MAX_DECORS);
+});
+
+test('slide kosong di tengah array dibuang — tidak pernah jadi gambar kosong', () => {
+  const row = { ...base, custom_config: { slides: ['satu', '   ', 'dua', ''], slide_count: 4 } };
+  const states = buildSlideStates(row);
+  assert.equal(states.length, 2);
+  assert.deepEqual(states.map((s) => s.slide), [{ index: 1, total: 2 }, { index: 2, total: 2 }]);
+});
+
+test('array yang isinya hanya kosong jatuh ke alur satu slide (content)', () => {
+  const row = { ...base, content: 'isi asli', custom_config: { slides: ['  ', ''], slide_count: 2 } };
+  const states = buildSlideStates(row);
+  assert.equal(states.length, 1);
+  assert.equal(states[0].slide, undefined);
+  assert.ok(states[0].content.includes('isi asli'));
+});
+
+test('slideUrlsOf: pakai image_urls bila ada, jatuh ke image_url, error bila dua-duanya kosong', () => {
+  assert.deepEqual(slideUrlsOf({ image_url: 'u1', custom_config: { image_urls: ['a', 'b'] } }), ['a', 'b']);
+  assert.deepEqual(slideUrlsOf({ image_url: 'u1', custom_config: null }), ['u1']);
+  assert.throws(() => slideUrlsOf({ image_url: null, custom_config: { image_urls: [] } }), /belum dirender/);
 });
