@@ -12,6 +12,7 @@
 import type { Client } from 'pg';
 import { log, summaryLine } from './log';
 import { staleClaimStatus } from './stale-claim';
+import { slideCountOf } from './slide-plan';
 
 /** Batas percobaan sebelum row dianggap gagal permanen. */
 export const MAX_ATTEMPTS = 3;
@@ -35,8 +36,12 @@ export interface Job {
   template: string;
   image_url: string | null;
   bg_preset: string | null;
-  custom_config: { decors?: string[]; from?: string; to?: string } | null;
+  custom_config:
+    | { decors?: string[]; from?: string; to?: string; slides?: string[]; slide_count?: number; image_urls?: string[] }
+    | null;
   publish_attempts: number;
+  /** jumlah slide nyata, dihitung dari custom_config.slides (bukan slide_count) */
+  slideCount?: number;
 }
 
 export interface RequeueOptions {
@@ -76,7 +81,10 @@ export async function claimJob(
                menfess.publish_attempts`,
     [from, to, excludeIds],
   );
-  return rows[0] ?? null;
+  const row = rows[0];
+  // slideCount selalu dihitung ulang: slide_count tersimpan bisa basi, sedangkan
+  // panjang array `slides` adalah kenyataan yang dirender.
+  return row ? { ...row, slideCount: slideCountOf(row) } : null;
 }
 
 /** Kembalikan job ke status antrean `target`, atau tandai gagal bila

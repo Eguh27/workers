@@ -30,6 +30,7 @@ import { readState, setQuotaBlockedUntil, setNotifiedAt, countWaitingManual } fr
 import { notifyWaitingRoom } from './notify';
 import { isPublishQuotaError, isTransientInstagramError } from './transient-error';
 import { captionFor } from './templates/captions';
+import { slideUrlsOf } from './slide-plan';
 
 /* .env lokal hanya pelengkap; secrets Actions sudah ada di process.env. */
 loadLocalEnv(new URL('../.env', import.meta.url));
@@ -141,7 +142,11 @@ async function runPublishQueue(db: Client, ig: InstagramClient): Promise<number>
         continue;
       }
 
-      await ig.waitUntilImagePublic(job.image_url);
+      // Semua slide harus bisa diunduh IG sebelum container dibuat: kegagalan
+      // CDN di slide ke-3 lebih baik terlihat sebagai error transient daripada
+      // carousel setengah jadi.
+      const imageUrls = slideUrlsOf(job);
+      for (const url of imageUrls) await ig.waitUntilImagePublic(url);
 
       // Cek kuota lagi sebelum create container
       const remaining = await ig.remainingPosts();
@@ -161,9 +166,10 @@ async function runPublishQueue(db: Client, ig: InstagramClient): Promise<number>
         break;
       }
 
-      // Publish ke Instagram
-      const creationId = await ig.createContainer(job.image_url, captionFor(job.content));
-      const mediaId = await ig.publishContainer(creationId);
+      // Publish ke Instagram: >1 slide = carousel (child → parent), satu slide = alur lama
+      const mediaId = imageUrls.length > 1
+        ? await ig.createCarouselContainer(imageUrls, captionFor(job.content)).then(ig.publishContainer)
+        : await ig.publishContainer(await ig.createContainer(imageUrls[0], captionFor(job.content)));
       log('media_publish ✓', mediaId);
 
       const permalink = await ig.permalink(mediaId);

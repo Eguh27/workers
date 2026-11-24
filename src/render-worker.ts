@@ -15,8 +15,7 @@ import { fatal, log, summaryLine, writeSummary } from './log';
 import { claimJob, requeueOrFail, sweepStaleClaims, type Job } from './queue';
 import { MAX_RENDER_PER_RUN, STALE_RENDER_MS } from './render-budget';
 import { renderFessImage, shutdownRenderer } from './render';
-import { composeFess } from './templates';
-import type { RenderState } from './templates/render';
+import { buildSlideStates } from './slide-plan';
 
 /* .env lokal hanya pelengkap; secrets Actions sudah ada di process.env. */
 loadLocalEnv(new URL('../.env', import.meta.url));
@@ -24,31 +23,30 @@ loadLocalEnv(new URL('../.env', import.meta.url));
 /** Render satu job. Markup memakai `composeFess(content, from, to)` — teks
  *  yang sama dengan preview composer, bukan `content` mentah. Caption
  *  Instagram tetap dari `content` mentah dan dibuat di jalur publish. */
-function renderJob(job: Job): Promise<string> {
-  const config = job.custom_config ?? {};
-  return renderFessImage(
-    {
-      template: job.template as RenderState['template'],
-      content: composeFess(job.content, config.from ?? '', config.to ?? ''),
-      code: job.submission_code,
-      decors: (config.decors ?? []) as RenderState['decors'],
-      bg: job.bg_preset,
-    },
-    `menfess-${job.submission_code}-${Date.now()}`,
-  );
+function renderJob(job: Job): Promise<string[]> {
+  const states = buildSlideStates(job);
+  return Promise.all(states.map((state, i) => renderFessImage(
+    state,
+    states.length > 1
+      ? `menfess-${job.submission_code}-slide-${i + 1}`
+      : `menfess-${job.submission_code}-${Date.now()}`,
+  )));
 }
 
 /** Simpan hasil render. `last_error` dibersihkan supaya kegagalan render
  *  sebelumnya tidak terbaca sebagai masalah pada row yang sudah siap tayang. */
-async function markRendered(db: Client, job: Job, imageUrl: string): Promise<void> {
+async function markRendered(db: Client, job: Job, imageUrls: string[]): Promise<void> {
+  // image_url tetap diisi slide pertama supaya papan & CMS manual tidak berubah;
+  // array lengkap masuk custom_config untuk publish carousel.
   await db.query(
     `UPDATE menfess
-        SET image_url = $1, status = 'rendered', last_error = NULL, updated_at = now()
-      WHERE id = $2`,
-    [imageUrl, job.id],
+        SET image_url = $1, custom_config = custom_config || $2::jsonb,
+            status = 'rendered', last_error = NULL, updated_at = now()
+      WHERE id = $3`,
+    [imageUrls[0], JSON.stringify({ image_urls: imageUrls, slide_count: imageUrls.length }), job.id],
   );
-  log(`${job.submission_code} dirender ✓`, imageUrl.slice(0, 60) + '…');
-  summaryLine(`🖼️ ${job.submission_code} → rendered`);
+  log(`${job.submission_code} dirender ✓ ${imageUrls.length} slide`);
+  summaryLine(`🖼️ ${job.submission_code} → rendered (${imageUrls.length} slide)`);
 }
 
 /** Inti satu run: sapuan dulu (row milik run mati kembali ke `queued`), lalu
@@ -74,8 +72,8 @@ async function runRenderQueue(db: Client): Promise<void> {
 
     const startedAt = Date.now();
     try {
-      const imageUrl = await renderJob(job);
-      await markRendered(db, job, imageUrl);
+      const imageUrls = await renderJob(job);
+      await markRendered(db, job, imageUrls);
       rendered++;
       log(`upload Cloudinary ✓ (${Date.now() - startedAt}ms)`);
     } catch (err) {

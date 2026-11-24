@@ -45,16 +45,16 @@ test('caption memakai isi mentah, bukan teks yang sudah dihias header', () => {
 
 test('gambar dirender dengan header from/to dari custom_config', () => {
   const plan = buildPlan([row('AAAA-1111', 'isi pesan', { custom_config: { from: 'mahasiswa', to: 'kamu' } })]);
-  assert.equal(plan[0].state.content, 'from: mahasiswa\nto: kamu\n\nisi pesan');
+  assert.equal(plan[0].slides[0].state.content, 'from: mahasiswa\nto: kamu\n\nisi pesan');
 });
 
 test('printilan dibatasi MAX_DECORS walau database menyimpan lebih', () => {
   const banyak = Array.from({ length: 9 }, (_, i) => `d${i}`);
   const plan = buildPlan([row('AAAA-1111', 'isi', { custom_config: { decors: banyak } })]);
-  assert.equal(plan[0].state.decors.length, MAX_DECORS);
+  assert.equal(plan[0].slides[0].state.decors.length, MAX_DECORS);
 });
 
 test('bg_preset null tetap diteruskan sebagai null', () => {
   const plan = buildPlan([row('AAAA-1111', 'isi')]);
-  assert.equal(plan[0].state.bg, null);
+  assert.equal(plan[0].slides[0].state.bg, null);
 });

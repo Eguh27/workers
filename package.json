@@ -8,13 +8,14 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "tsx --test src/env.test.ts src/quota.test.ts src/run-budget.test.ts src/stale-claim.test.ts src/transient-error.test.ts src/render-queue.test.ts",
+    "test": "tsx --test src/env.test.ts src/quota.test.ts src/run-budget.test.ts src/stale-claim.test.ts src/transient-error.test.ts src/render-queue.test.ts src/slide-plan.test.ts src/carousel.test.ts",
     "typecheck": "tsc --noEmit",
     "render:bundle": "node src/build-render-bundle.mjs",
     "worker": "node src/build-render-bundle.mjs && tsx src/publish.ts",
     "render:worker": "node src/build-render-bundle.mjs && tsx src/render-worker.ts",
     "render:queue": "node src/build-render-bundle.mjs && tsx src/render-queue.ts",
-    "smoke": "node src/build-render-bundle.mjs && tsx src/smoke-render.ts"
+    "smoke": "node src/build-render-bundle.mjs && tsx src/smoke-render.ts",
+    "render:slides": "node src/build-render-bundle.mjs && tsx src/render-slides.ts"
   },
   "dependencies": {
     "cloudinary": "^2.8.0",

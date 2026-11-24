@@ -28,6 +28,8 @@ export interface RenderState {
   decors: DecorId[];
   /** id preset warna; null = tampilan bawaan template */
   bg?: string | null;
+  /** penanda posisi slide (mis. 1/3); tidak tampil bila fess satu slide */
+  slide?: { index: number; total: number };
 }
 
 export const DESIGN_W = 540;
@@ -272,6 +274,15 @@ export function buildNode(state: RenderState): HTMLElement {
   if (tpl === 'stiker') attachStickers(frame);
   applyText(frame, state, tpl);
   applyDecors(frame, state);
+  if (state.slide) applySlideMarker(frame, state.slide);
   wrap.appendChild(frame);
   return wrap;
+}
+
+/** penanda kecil "n/total" di sudut safe-zone — hanya saat fess multi-slide */
+function applySlideMarker(frame: HTMLElement, slide: { index: number; total: number }) {
+  const el = document.createElement('div');
+  el.className = 'mfsp-slide-mark';
+  el.textContent = `${slide.index}/${slide.total}`;
+  frame.appendChild(el);
 }

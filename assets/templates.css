@@ -170,3 +170,12 @@
 .mfsp .pd-cloud { height: 22px; border-radius: 999px; background: rgba(255,255,255,0.95); }
 .mfsp .pd-cloud::before { content: ""; position: absolute; left: 13%; bottom: 52%; width: 48%; height: 210%; background: inherit; border-radius: 50%; }
 .mfsp .pd-cloud::after  { content: ""; position: absolute; right: 15%; bottom: 42%; width: 34%; height: 150%; background: inherit; border-radius: 50%; }
+.mfsp .pd-cloud::after  { content: ""; position: absolute; right: 15%; bottom: 42%; width: 34%; height: 150%; background: inherit; border-radius: 50%; }
+
+/* penanda slide "n/total" — di dalam safe-zone 540×540, tidak menutupi teks */
+.mfsp .mfsp-slide-mark {
+  position: absolute; right: 14px; bottom: 14px; z-index: 12;
+  font-family: 'Space Mono', monospace; font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,.92); background: rgba(23,63,58,.62);
+  padding: 3px 9px; border-radius: 999px; letter-spacing: .5px; pointer-events: none;
+}

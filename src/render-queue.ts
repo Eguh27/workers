@@ -17,8 +17,8 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { Client } from 'pg';
 import { loadLocalEnv } from './env';
 import { captionFor } from './templates/captions';
-import { composeFess, MAX_DECORS } from './templates';
 import { renderToBuffer, uploadImage, shutdownRenderer } from './render';
+import { buildSlideStates } from './slide-plan';
 import type { RenderState } from './templates/render';
 
 /* .env lokal hanya pelengkap; env yang sudah ada tidak ditimpa. */
@@ -29,20 +29,22 @@ export interface QueueRow {
   content: string;
   template: string;
   bg_preset: string | null;
-  custom_config: { decors?: string[]; from?: string; to?: string } | null;
+  custom_config: { decors?: string[]; from?: string; to?: string; slides?: string[]; slide_count?: number } | null;
 }
 
 export interface PlanItem {
   /** nomor urut 1..n, mengikuti `created_at` */
   no: number;
   code: string;
-  /** nama berkas relatif, mis. "01-NW6K-9C7R.jpg" */
+  /** nama berkas slide pertama, mis. "01-NW6K-9C7R.jpg" */
   file: string;
   /** caption Instagram — isi mentah, tanpa header from/to */
   caption: string;
-  /** state yang dipakai renderer (isi sudah lewat composeFess) */
-  state: RenderState;
+  /** satu entri per slide; fess satu slide = panjang 1 */
+  slides: { file: string; state: RenderState }[];
 }
+
+export type { RenderState };
 
 const OUT_DIR = new URL('../postingan/', import.meta.url);
 
@@ -50,20 +52,22 @@ const OUT_DIR = new URL('../postingan/', import.meta.url);
  *  dipertahankan apa adanya — pemanggil yang bertanggung jawab mengurutkan. */
 export function buildPlan(rows: QueueRow[]): PlanItem[] {
   return rows.map((row, i) => {
-    const cfg = row.custom_config ?? {};
-    const decors = (cfg.decors ?? []).slice(0, MAX_DECORS);
+    const no = String(i + 1).padStart(2, '0');
+    const states = buildSlideStates(row);
+    const multi = states.length > 1;
+    const slides = states.map((state, s) => ({
+      state,
+      // fess multi-slide disimpan per slide supaya urutan posting manual jelas
+      file: multi
+        ? `${no}-${row.submission_code}-slide-${s + 1}.jpg`
+        : `${no}-${row.submission_code}.jpg`,
+    }));
     return {
       no: i + 1,
       code: row.submission_code,
-      file: `${String(i + 1).padStart(2, '0')}-${row.submission_code}.jpg`,
+      file: slides[0].file,
       caption: captionFor(row.content),
-      state: {
-        template: row.template as RenderState['template'],
-        content: composeFess(row.content, cfg.from ?? '', cfg.to ?? ''),
-        code: row.submission_code,
-        decors: decors as RenderState['decors'],
-        bg: row.bg_preset,
-      },
+      slides,
     };
   });
 }
@@ -101,16 +105,29 @@ async function main(): Promise<void> {
   for (const [i, item] of plan.entries()) {
     const row = rows[i];
     const t0 = Date.now();
-    const buffer = await renderToBuffer(item.state);
-    writeFileSync(new URL(item.file, OUT_DIR), buffer);
+    const urls: string[] = [];
+    for (const slide of item.slides) {
+      const buffer = await renderToBuffer(slide.state);
+      writeFileSync(new URL(slide.file, OUT_DIR), buffer);
+      if (!row.image_url) {
+        urls.push(await uploadImage(
+          buffer,
+          item.slides.length > 1
+            ? `menfess-${item.code}-slide-${urls.length + 1}`
+            : `menfess-${item.code}-${Date.now()}`,
+        ));
+      }
+    }
 
     if (row.image_url) {
-      log(`${item.no}/${plan.length} ${item.code} — dirender (image_url sudah ada, upload dilewati)`);
+      log(`${item.no}/${plan.length} ${item.code} — dirender ${item.slides.length} slide (upload dilewati)`);
     } else {
-      const url = await uploadImage(buffer, `menfess-${item.code}-${Date.now()}`);
-      await db.query(`UPDATE menfess SET image_url = $1, updated_at = now() WHERE id = $2`, [url, row.id]);
+      await db.query(
+        `UPDATE menfess SET image_url = $1, custom_config = custom_config || $2::jsonb, updated_at = now() WHERE id = $3`,
+        [urls[0], JSON.stringify({ image_urls: urls, slide_count: urls.length }), row.id],
+      );
       uploaded++;
-      log(`${item.no}/${plan.length} ${item.code} — dirender + upload (${Date.now() - t0}ms)`);
+      log(`${item.no}/${plan.length} ${item.code} — dirender ${item.slides.length} slide + upload (${Date.now() - t0}ms)`);
     }
   }
 
@@ -125,7 +142,9 @@ async function main(): Promise<void> {
     'Posting dari app Instagram, urut dari atas. Kuota API tidak terpakai',
     'karena posting manual tidak lewat media_publish.',
     '',
-    ...plan.map((p) => `- [ ] ${p.no}. ${p.code} → \`${p.file}\``),
+    ...plan.flatMap((p) => p.slides.length > 1
+      ? p.slides.map((s, i) => `- [ ] ${p.no}. ${p.code} slide ${i + 1}/${p.slides.length} → \`${s.file}\``)
+      : [`- [ ] ${p.no}. ${p.code} → \`${p.file}\``]),
     '',
     'Caption tiap post ada di `captions.txt`.',
   ].join('\n');

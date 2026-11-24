@@ -158,3 +158,28 @@ justru sinyal anti-spam ke Instagram. Rinciannya di `src/quota.ts`.
 
 Repo ini publik. Jangan menambahkan URL privat, token, atau data pribadi
 pengirim ke kode, komentar, maupun contoh.
+
+## Fess multi-slide (carousel)
+
+Fess yang lebih panjang dari 400 karakter dipecah menjadi beberapa slide oleh
+situs (composer) dan disimpan di `custom_config`:
+
+- `slides`: array teks per slide (sumber kebenaran untuk render);
+- `slide_count`: jumlah slide (dihitung ulang dari `slides` oleh
+  `slide-plan.ts`, tidak pernah dipercaya apa adanya);
+- `image_urls`: array URL Cloudinary, diisi render worker dengan public_id
+  `menfess-{submission_code}-slide-{n}`.
+
+`image_url` tetap diisi slide pertama supaya papan web dan CMS manual tidak
+berubah. Publish carousel: satu child container `is_carousel_item=true` per
+slide, lalu parent `media_type=CAROUSEL` dengan `children`, lalu
+`media_publish` parent — tetap **satu fess, satu kode, satu permalink**.
+
+Verifikasi tanpa Instagram:
+
+```bash
+npm run render:slides -- --text "teks panjang..." --from teman
+```
+
+Skrip ini hanya render + upload Cloudinary dan mencetak
+`{slide_count, image_urls}`; tidak ada panggilan Graph API.
