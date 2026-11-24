@@ -18,7 +18,7 @@ export const FROM_TO_MAX = 32;
 /** Batas karakter satu slide gambar; teks yang lebih panjang dipecah. */
 export const SLIDE_MAX_LEN = 400;
 /** Jumlah slide maksimum per fess (IG carousel mendukung 10). */
-export const MAX_SLIDES = 6;
+export const MAX_SLIDES = 4;
 
 export type TemplateId = 'langit' | 'kaca' | 'stiker';
 
